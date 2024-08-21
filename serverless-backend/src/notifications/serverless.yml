@@ -1,0 +1,9 @@
+#sendWelcomeEmail:
+#  handler: src/notifications/email.default
+#  events:
+#    - sqs:
+#        batchSize: 10
+#        arn:
+#          Fn::GetAtt:
+#            - EmailQueue
+#            - Arn

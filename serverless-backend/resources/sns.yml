@@ -1,0 +1,5 @@
+#Resources:
+#  SubscriptionCreatedTopic:
+#    Type: AWS::SNS::Topic
+#    Properties:
+#      TopicName: movie-app-serverless-backend-subscription-created-${sls:stage}

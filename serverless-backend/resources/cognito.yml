@@ -1,0 +1,31 @@
+Resources:
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: movie-journal-app-user-pool-${sls:stage}
+      UsernameAttributes: #this is to determine how the user will log in, default behavior is signing in
+                          #with their username
+        - email
+      AutoVerifiedAttributes:
+        - email
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: movie-journal-app-client-${sls:stage}
+      UserPoolId:
+        Ref: CognitoUserPool
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+      GenerateSecret: false
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: movie-journal-app-identity-pool-${sls:stage}
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ClientId:
+            Ref: CognitoUserPoolClient
+          ProviderName:
+            Fn::GetAtt:
+              - CognitoUserPool
+              - ProviderName

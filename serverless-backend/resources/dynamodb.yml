@@ -1,0 +1,22 @@
+Resources:
+    MoviesTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+            TableName: movie-journal-app-table-${sls:stage}
+            KeySchema:
+                -
+                    AttributeName: pk
+                    KeyType: HASH
+                -
+                    AttributeName: sk
+                    KeyType: RANGE
+            AttributeDefinitions:
+                 -
+                    AttributeType: S
+                    AttributeName: pk
+                 -
+                    AttributeType: S
+                    AttributeName: sk
+            BillingMode: PAY_PER_REQUEST
+
+
