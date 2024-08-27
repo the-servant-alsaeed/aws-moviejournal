@@ -24,8 +24,38 @@ getMovies:
 #      Resource:
 #        - Ref: SubscriptionCreatedTopic
 
-addMovie:
-  handler: src/movie/addMovie/handler.default
+getFavorites:
+  handler: src/movie/getFavorites/handler.default
+  iamRoleStatements:
+    - Effect: Allow
+      Action: dynamodb:Query
+      Resource:
+        Fn::GetAtt:
+          - MoviesTable
+          - Arn
+  environment:
+    TABLE_NAME:
+      Ref: MoviesTable
+  events:
+    - http:
+        method: get
+        path: /v1/favorites
+        authorizer:
+          name: COGNITO_AUTHORIZER
+          type: COGNITO_USER_POOLS
+          authorizerId:
+            Ref: ApiGatewayCognitoAuthorizer
+#    - http:
+#        method: get
+#        path: /v1/movies/{movieID}
+#        authorizer:
+#          name: COGNITO_AUTHORIZER
+#          type: COGNITO_USER_POOLS
+#          authorizerId:
+#            Ref: ApiGatewayCognitoAuthorizer
+
+addFavorite:
+  handler: src/movie/addFavorite/handler.default
   iamRoleStatements:
     - Effect: Allow
       Action: dynamodb:BatchWriteItem
@@ -40,3 +70,8 @@ addMovie:
     - http:
         method: post
         path: /v1/movies
+        authorizer:
+          name: COGNITO_AUTHORIZER
+          type: COGNITO_USER_POOLS
+          authorizerId:
+            Ref: ApiGatewayCognitoAuthorizer

@@ -19,11 +19,22 @@ export default async () => {
 
         const response = await docClient.send(command);
 
-        return {
-            statusCode: 201,
-            body: JSON.stringify(response.Items)
-        };
+        if (response.Items && response.Items.length > 0) {
+            return {
+                statusCode: 200,
+                body: JSON.stringify(response.Items),
+            };
+        } else {
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ message: "No movies found" }),
+            };
+        }
     }catch (error){
-        console.log(error)
+        console.error("Error fetching movies", error);
+        return {
+            statusCode: 500,
+            body: null
+        }
     }
 };

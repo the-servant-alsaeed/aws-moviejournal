@@ -1,24 +1,13 @@
 import React from 'react';
-import {useQuery, QueryClient, QueryClientProvider} from '@tanstack/react-query';
+import {QueryClient, QueryClientProvider, useQuery} from '@tanstack/react-query';
 import Movie from './Movie';
-import {
-  SafeAreaView,
-  Button,
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { Amplify } from 'aws-amplify';
-import { Authenticator, useAuthenticator } from "@aws-amplify/ui-react-native";
-// import {
-//   Colors,
-//   DebugInstructions,
-//   Header,
-//   LearnMoreLinks,
-//   ReloadInstructions,
-// } from 'react-native/Libraries/NewAppScreen';
+import {ActivityIndicator, Button, SafeAreaView, ScrollView, StyleSheet, Text, View,} from 'react-native';
+import {Amplify} from 'aws-amplify';
+import {Authenticator, useAuthenticator} from "@aws-amplify/ui-react-native";
+import {NavigationContainer} from "@react-navigation/native";
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 Amplify.configure({
   Auth: {
@@ -53,6 +42,7 @@ interface Movie{
   Poster: string;
 }
 
+//SIGN OUT BUTTON
 const SignOutButton = () => {
   const { signOut } = useAuthenticator();
 
@@ -63,12 +53,24 @@ const SignOutButton = () => {
   );
 };
 
+//FETCHING MOVIES USING REACT-QUERY AND GETMOVIES API FROM API GATEWAY IN SERVERLESS BACKEND
 const queryClient = new QueryClient();
 
 async function fetchMovies(){
-  const response = await fetch("https://www.omdbapi.com/?apikey=89d3cf2f&s=Harry+Potter");
-  let data = await response.json();
-  return data.Search.map((movie: Movie) => ({...movie, isFavorite: false}));
+  const response = await fetch('https://nyg9rmjaw4.execute-api.us-east-1.amazonaws.com/dev/v1/movies');
+  return response.json();
+}
+
+async function fetchFavorites(){
+  const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+
+  const response = await fetch('https://nyg9rmjaw4.execute-api.us-east-1.amazonaws.com/dev/v1/favorites',
+      {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+    return response.json();
 }
 
 function AppContent(): React.JSX.Element {
@@ -78,6 +80,12 @@ function AppContent(): React.JSX.Element {
     queryFn: fetchMovies,
   });
 
+  const favoritesQuery = useQuery({
+    queryKey: ['favorites'],
+    queryFn: fetchFavorites,
+  });
+
+  //LOADING STATE
   if (movieQuery.isLoading) {
     return <View style={styles.container}>
       <Text style={styles.Loading}>Loading...</Text>
@@ -87,25 +95,73 @@ function AppContent(): React.JSX.Element {
       />
     </View>;
   }
-
+  //ERROR STATE
   if (movieQuery.isError) {
     console.error('Query error:', movieQuery.error);
     return <View style={styles.container}><Text>Error: {movieQuery.error.message}</Text></View>;
   }
 
-
-  return (
-    <Authenticator.Provider>
-      <Authenticator>
+  //HOME SCREEN
+  function HomeScreen(){
+    return(
         <SafeAreaView style={styles.container}>
-          <Text style={styles.headerTitle}>The (React-Native) Movie Journal🎬</Text>
+          <Text style={styles.headerTitle}>The Movie Journal🎬</Text>
           <ScrollView contentContainerStyle={styles.moviesList}>
             {movieQuery.data.map(function(movie) {
-              return <Movie key={movie.imdbID} movie={movie} />;
+              return <Movie key={movie.movieID} movie={movie} />;
             })}
             <SignOutButton />
           </ScrollView>
         </SafeAreaView>
+    );
+  }
+
+  //FAVORITES TAB
+  function FavoritesScreen(){
+      return(
+          <SafeAreaView style={styles.container}>
+          <Text style={styles.headerTitle}>Favorites🤍</Text>
+          <ScrollView contentContainerStyle={styles.moviesList}>
+            {favoritesQuery.data.map(function(movie) {
+                return <Movie key={movie.movieID} movie={movie} queryClient={queryClient}/>;
+            })}
+              <SignOutButton />
+          </ScrollView>
+          </SafeAreaView>
+      );
+  }
+
+  const Tab = createBottomTabNavigator();
+
+  return (
+    <Authenticator.Provider>
+      <Authenticator>
+        <NavigationContainer>
+            <Tab.Navigator screenOptions={({ route }) => ({
+              tabBarIcon: ({ focused, color, size }) => {
+                let iconName;
+
+                if (route.name === 'Home') {
+                  iconName = focused ? 'home' : 'home-outline';
+                } else if (route.name === 'Favorites') {
+                  iconName = focused ? 'heart' : 'heart-outline';
+                }
+
+                return <Icon name={iconName} size={size} color={color} />;
+              },
+              tabBarActiveTintColor: '#BF6900',
+              tabBarInactiveTintColor: 'gray',
+              tabBarStyle: {
+                backgroundColor: '#FFFFED',
+                borderTopWidth: 1,
+                borderTopColor: '#eee',
+              },
+              headerShown: false,
+            })}>
+                <Tab.Screen name="Home" component={HomeScreen}/>
+                <Tab.Screen name="Favorites" component={FavoritesScreen}/>
+            </Tab.Navigator>
+        </NavigationContainer>
       </Authenticator>
     </Authenticator.Provider>
   );
