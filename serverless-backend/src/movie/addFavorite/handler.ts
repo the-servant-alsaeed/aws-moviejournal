@@ -50,10 +50,11 @@ export default async (event: APIGatewayEvent) => {
 
         const response = await snsClient.send(snsPublishCommand);
         console.log({ ...response })
+        console.log("SNS message sent");
 
         return {
             statusCode: 201,
-            body: JSON.stringify({ movieTitle, movieID, posterURL, plot})
+            body: JSON.stringify({ userEmail, movieTitle, movieID, posterURL, plot})
         };
     } catch (error) {
         console.error("Error adding favorite", error);
