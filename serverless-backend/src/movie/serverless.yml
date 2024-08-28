@@ -17,12 +17,6 @@ getMovies:
     - http:
         method: get
         path: /v1/movies/{movieID}
-#    SNS_TOPIC:
-#      Ref: SubscriptionCreatedTopic
-#    - Effect: Allow
-#      Action: sns:Publish
-#      Resource:
-#        - Ref: SubscriptionCreatedTopic
 
 getFavorites:
   handler: src/movie/getFavorites/handler.default
@@ -45,14 +39,7 @@ getFavorites:
           type: COGNITO_USER_POOLS
           authorizerId:
             Ref: ApiGatewayCognitoAuthorizer
-#    - http:
-#        method: get
-#        path: /v1/movies/{movieID}
-#        authorizer:
-#          name: COGNITO_AUTHORIZER
-#          type: COGNITO_USER_POOLS
-#          authorizerId:
-#            Ref: ApiGatewayCognitoAuthorizer
+
 
 addFavorite:
   handler: src/movie/addFavorite/handler.default
@@ -63,9 +50,15 @@ addFavorite:
         Fn::GetAtt:
           - MoviesTable
           - Arn
+    - Effect: Allow
+      Action: sns:Publish
+      Resource:
+      - Ref: MovieFavoritedTopic
   environment:
     TABLE_NAME:
       Ref: MoviesTable
+    SNS_TOPIC:
+      Ref: MovieFavoritedTopic
   events:
     - http:
         method: post

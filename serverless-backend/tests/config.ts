@@ -1,5 +1,5 @@
 export const lambdaFunctions = {
-    sendWelcomeEmail: `workshop-qasim-${process.env.STAGE}-sendWelcomeEmail`
+    sendFavoriteEmail: `movie-app-serverless-backend-${process.env.STAGE}-sendFavoriteEmail`
 }
 
 export function getQueueUrlByArn(accountId: string, queueArn: string) {

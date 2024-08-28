@@ -1,15 +1,18 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import * as console from "node:console";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const snsClient = new SNSClient({});
 
 export default async (event: APIGatewayEvent) => {
     try{
         // CAPTURE THIS INFO
         const userSub = event.requestContext.authorizer!.claims.sub;
+        const userEmail = event.requestContext.authorizer!.claims.email;
         console.log(userSub);
         const favoriteKey = `favorite#${userSub}`;
 
@@ -38,6 +41,15 @@ export default async (event: APIGatewayEvent) => {
         });
 
         await docClient.send(command);
+
+        // SEND A MESSAGE TO THE SNS TOPIC
+        const snsPublishCommand = new PublishCommand({
+            TopicArn: process.env.SNS_TOPIC!,
+            Message: JSON.stringify({ userEmail, movieTitle, movieID, posterURL, plot })
+        });
+
+        const response = await snsClient.send(snsPublishCommand);
+        console.log({ ...response })
 
         return {
             statusCode: 201,
