@@ -1,5 +1,5 @@
 import React from 'react';
-import {QueryClient, QueryClientProvider, useQuery} from '@tanstack/react-query';
+import {QueryClient, QueryClientProvider, useMutation, useQuery} from '@tanstack/react-query';
 import Movie from './Movie';
 import {ActivityIndicator, Button, SafeAreaView, ScrollView, StyleSheet, Text, View,} from 'react-native';
 import {Amplify} from 'aws-amplify';
@@ -61,6 +61,7 @@ async function fetchMovies(){
   return response.json();
 }
 
+//FETCHING FAVORITES USING REACT-QUERY AND GETFAVORITES API FROM API GATEWAY IN SERVERLESS BACKEND
 async function fetchFavorites(){
   const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
 
@@ -83,6 +84,42 @@ function AppContent(): React.JSX.Element {
   const favoritesQuery = useQuery({
     queryKey: ['favorites'],
     queryFn: fetchFavorites,
+  });
+
+  //REMOVE FAVORITES FUNCTION
+  async function removeFavorite(movie) {
+    try {
+      const { accessToken, idToken } = (await fetchAuthSession()).tokens ?? {};
+
+      const response = await fetch(`https://nyg9rmjaw4.execute-api.us-east-1.amazonaws.com/dev/v1/movies/${movie.movieID}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+      console.log(JSON.stringify(movie));
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Favorite removed:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in favoriteMovie:', error);
+      throw error;
+    }
+  }
+
+  const removeFavoriteMutation = useMutation({
+    mutationFn: removeFavorite,
   });
 
   //LOADING STATE
@@ -125,6 +162,11 @@ function AppContent(): React.JSX.Element {
             {favoritesQuery.data.map(function(movie) {
                 return <Movie key={movie.movieID} movie={movie} queryClient={queryClient}/>;
             })}
+          <Button
+              title="💔"
+              onPress={() => removeFavoriteMutation.mutate(movie)}
+              color="#000000"
+          />
               <SignOutButton />
           </ScrollView>
           </SafeAreaView>
