@@ -3,7 +3,7 @@ import {useMutation} from "@tanstack/react-query";
 import { fetchAuthSession } from 'aws-amplify/auth';
 
 // @ts-ignore
-function Movie({ movie, queryClient }) {
+function Movie({ movie }) {
 
     async function favoriteMovie(movie) {
         try {
@@ -39,9 +39,6 @@ function Movie({ movie, queryClient }) {
 
     const favoriteMovieMutation = useMutation({
         mutationFn: favoriteMovie,
-        onSuccess: () => {
-            queryClient.invalidateQueries(['favorites']);
-        },
     });
 
     return <View style={styles.container}>
@@ -64,6 +61,7 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         marginBottom: 16,
+        marginTop: 16,
         backgroundColor: '#2C5E1A',
         borderRadius: 8,
     },

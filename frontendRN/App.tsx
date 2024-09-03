@@ -96,8 +96,13 @@ function AppContent(): React.JSX.Element {
             method: 'DELETE',
             headers: {
               Authorization: `Bearer ${idToken}`,
-              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              movieTitle: movie.movieTitle,
+              movieID: movie.movieID,
+              posterURL: movie.posterURL,
+              plot: movie.plot,
+            }),
           });
       console.log(JSON.stringify(movie));
 
@@ -160,13 +165,11 @@ function AppContent(): React.JSX.Element {
           <Text style={styles.headerTitle}>Favorites🤍</Text>
           <ScrollView contentContainerStyle={styles.moviesList}>
             {favoritesQuery.data.map(function(movie) {
-                return <Movie key={movie.movieID} movie={movie} queryClient={queryClient}/>;
+                return <><Movie key={movie.movieID} movie={movie} queryClient={queryClient}/><Button
+                    title="💔"
+                    onPress={() => removeFavoriteMutation.mutate(movie)}
+                    color="#000000"/></>;
             })}
-          <Button
-              title="💔"
-              onPress={() => removeFavoriteMutation.mutate(movie)}
-              color="#000000"
-          />
               <SignOutButton />
           </ScrollView>
           </SafeAreaView>
