@@ -1,0 +1,5 @@
+Resources:
+  MovieFavoritedTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: movie-app-serverless-backend-movie-favorited-${sls:stage}
